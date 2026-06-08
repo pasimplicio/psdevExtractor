@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PSDevExtractor — Tratamento de arquivos .csv | CAEMA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ── HEADER ──────────────────────────────────────────── -->
+  <header class="app-header">
+    <div class="header-inner">
+
+      <!-- CAEMA Logo -->
+      <div class="logo-caema">
+        <img src="logo_caema.png" alt="CAEMA" title="Companhia de Saneamento Ambiental do Maranhão">
+      </div>
+
+      <div class="header-divider"></div>
+
+      <!-- System name -->
+      <div class="logo-system">
+        <span class="logo-system-name">PSDevExtractor</span>
+        <span class="logo-system-sub">Tratamento de arquivos .csv</span>
+      </div>
+
+      <!-- Status bar -->
+      <div class="status-bar">
+        <span class="status-item" id="status-rows">Nenhum arquivo carregado</span>
+        <span class="status-sep" id="status-sep1" style="display:none">·</span>
+        <span class="status-item" id="status-filtered" style="display:none"></span>
+        <span class="status-sep" id="status-sep2" style="display:none">·</span>
+        <span class="status-item" id="status-time" style="display:none"></span>
+      </div>
+
+      <button class="help-btn" id="help-btn" title="Ajuda — como usar o sistema">?</button>
+      <button class="theme-toggle" id="theme-toggle" title="Alternar tema">🌙</button>
+    </div>
+  </header>
+
+  <!-- ── MODAL DE AJUDA ─────────────────────────────────────── -->
+  <div class="help-overlay hidden" id="help-overlay">
+    <div class="help-modal">
+
+      <div class="help-modal-header">
+        <div class="help-modal-title">
+          <span class="help-modal-icon">?</span>
+          Como usar o PSDevExtractor
+        </div>
+        <button class="help-close" id="help-close" title="Fechar">×</button>
+      </div>
+
+      <div class="help-modal-body">
+
+        <!-- 1. Carregar arquivo -->
+        <div class="help-section">
+          <div class="help-section-title">
+            <span class="help-num">1</span> Carregar arquivo CSV
+          </div>
+          <div class="help-section-body">
+            <p>Arraste um arquivo <strong>.csv</strong> para a área de upload ou clique nela para selecionar. Após selecionar o arquivo, clique em <strong>▶ Carregar CSV</strong>.</p>
+            <div class="help-tip">
+              <strong>Encoding:</strong> deixe em <em>Auto-detectar</em> para a maioria dos arquivos. Se aparecerem caracteres estranhos (ç, ã, é), selecione manualmente <em>Windows-1252</em> ou <em>UTF-8</em>.
+            </div>
+            <div class="help-tip">
+              <strong>Delimitador:</strong> detectado automaticamente — pode ser vírgula <code>,</code>, ponto e vírgula <code>;</code> ou tabulação. O valor detectado aparece após o carregamento.
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Arquivo grande -->
+        <div class="help-section">
+          <div class="help-section-title">
+            <span class="help-num">2</span> Arquivos grandes (acima de 900 MB)
+          </div>
+          <div class="help-section-body">
+            <p>Para arquivos maiores que 900 MB, o sistema ativa o <strong>modo de processamento em etapas</strong> para evitar travamento do navegador:</p>
+            <ol class="help-list">
+              <li>O sistema lê apenas as primeiras 500 linhas para montar os filtros.</li>
+              <li>Configure os filtros desejados (Regional, colunas etc.).</li>
+              <li>Clique em <strong>⚡ Processar</strong> — o arquivo é lido por inteiro aplicando os filtros durante a leitura, mantendo apenas as linhas que passam.</li>
+            </ol>
+            <div class="help-tip warn">
+              Quanto mais restritivo o filtro, menor o resultado em memória e mais rápida a exportação.
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Filtros -->
+        <div class="help-section">
+          <div class="help-section-title">
+            <span class="help-num">3</span> Filtros
+          </div>
+          <div class="help-section-body">
+            <p>Selecione uma coluna no seletor e clique em <strong>+ Adicionar Filtro</strong>. Cada filtro é independente e todos são aplicados em conjunto (lógica <strong>E</strong>).</p>
+            <table class="help-table">
+              <thead><tr><th>Tipo detectado</th><th>Operadores disponíveis</th></tr></thead>
+              <tbody>
+                <tr><td><span class="hbadge txt">TXT</span> Texto</td><td>Contém, Não contém, Igual a, Diferente de, Começa com, Termina com, Regex</td></tr>
+                <tr><td><span class="hbadge num">NUM</span> Número</td><td>= Igual, ≠ Diferente, &gt; Maior, ≥ Maior ou igual, &lt; Menor, ≤ Menor ou igual, ↔ Entre</td></tr>
+                <tr><td><span class="hbadge dat">DATA</span> Data</td><td>Depois de, Antes de, Igual a, Entre (suporta formato dd/mm/aaaa)</td></tr>
+              </tbody>
+            </table>
+            <div class="help-tip">
+              O tipo da coluna é detectado automaticamente analisando as primeiras 200 linhas. Se ≥ 80% dos valores forem numéricos, a coluna é tratada como número.
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Filtro Regional -->
+        <div class="help-section">
+          <div class="help-section-title">
+            <span class="help-num">4</span> Filtro de Regional
+          </div>
+          <div class="help-section-body">
+            <p>Aparece automaticamente quando o CSV contém uma coluna de localidade (<em>Localidade, CódigoLocalidade, IdLocalidade</em> etc.). Selecione uma Regional para exibir apenas as linhas daquela regional.</p>
+            <p style="margin-top:.5rem">As regionais disponíveis são: <strong>BARREIRINHAS, CHAPADINHA, IMPERATRIZ, ITAPECURU, PEDREIRAS, PINHEIRO, PRES DUTRA, SAO JOAO DOS PATOS, SAO LUIS, SANTA INES</strong>.</p>
+          </div>
+        </div>
+
+        <!-- 5. Campos para exportação -->
+        <div class="help-section">
+          <div class="help-section-title">
+            <span class="help-num">5</span> Campos para Exportação
+          </div>
+          <div class="help-section-body">
+            <p>Por padrão, <strong>todos os campos são exportados</strong>. Para exportar apenas colunas específicas:</p>
+            <ol class="help-list">
+              <li>Selecione um campo no seletor e clique em <strong>+ Campo</strong>.</li>
+              <li>O campo aparece como uma etiqueta <code>#NomeDoCampo</code>.</li>
+              <li>Adicione quantos campos quiser — a tabela e a exportação passam a mostrar apenas eles.</li>
+              <li>Para remover um campo, clique no <strong>×</strong> na etiqueta.</li>
+              <li>Para voltar a exportar tudo, clique em <strong>Limpar</strong>.</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- 6. Tabela e ordenação -->
+        <div class="help-section">
+          <div class="help-section-title">
+            <span class="help-num">6</span> Tabela e Ordenação
+          </div>
+          <div class="help-section-body">
+            <p>A coluna <strong>#</strong> à esquerda exibe o número original da linha no CSV (1-baseado). Clique no cabeçalho de qualquer coluna para ordenar — clique novamente para inverter a ordem.</p>
+            <p style="margin-top:.5rem">Use <strong>Linhas por página</strong> nas configurações para controlar quantas linhas são exibidas por vez (50, 100, 200 ou 500).</p>
+          </div>
+        </div>
+
+        <!-- 7. Exportar -->
+        <div class="help-section">
+          <div class="help-section-title">
+            <span class="help-num">7</span> Exportar para Excel
+          </div>
+          <div class="help-section-body">
+            <p>Clique em <strong>⬇ Exportar para Excel</strong> para baixar as linhas filtradas em formato <code>.xlsx</code>. O arquivo gerado respeita os filtros ativos e os campos selecionados.</p>
+            <div class="help-tip warn">
+              O Excel suporta no máximo <strong>1.048.575 linhas</strong> por planilha. Se o resultado filtrado exceder esse limite, apenas as primeiras 1.048.575 linhas serão exportadas e um aviso será exibido.
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /body -->
+
+      <div class="help-modal-footer">
+        <span>PSDevExtractor · PSdev — Tecnologia &amp; Sistemas · <a href="mailto:pasimplicio@gmail.com">pasimplicio@gmail.com</a></span>
+        <button class="btn-primary" id="help-close-btn">Fechar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <main>
+
+    <!-- ── UPLOAD + CONFIG ─────────────────────────────────── -->
+    <div class="top-row">
+
+      <!-- Upload -->
+      <section class="glass-panel">
+        <p class="panel-title">Arquivo CSV</p>
+
+        <div class="drop-zone" id="drop-zone">
+          <div class="drop-icon">📂</div>
+          <div class="drop-text">Arraste um CSV aqui ou clique para selecionar</div>
+          <div class="drop-hint">Suporta arquivos com milhões de linhas · 100% no navegador</div>
+          <input type="file" id="file-input" accept=".csv,.txt" hidden>
+        </div>
+
+        <div class="file-info hidden" id="file-info">
+          <span class="file-name" id="file-name-display"></span>
+          <button class="btn-text" id="change-file-btn">Trocar arquivo</button>
+        </div>
+      </section>
+
+      <!-- Config -->
+      <section class="glass-panel config-panel">
+        <p class="panel-title">Configurações</p>
+
+        <div class="config-group">
+          <label for="encoding-select">Encoding</label>
+          <select id="encoding-select">
+            <option value="auto">Auto-detectar</option>
+            <option value="UTF-8">UTF-8</option>
+            <option value="windows-1252">Windows-1252 (ANSI)</option>
+          </select>
+        </div>
+
+        <div class="config-group">
+          <label>Delimitador</label>
+          <div class="delimiter-display">
+            <span class="badge">Auto</span>
+            <span class="detected" id="detected-delimiter"></span>
+          </div>
+        </div>
+
+        <div class="config-group">
+          <label for="page-size-select">Linhas por página</label>
+          <select id="page-size-select">
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="200">200</option>
+            <option value="500">500</option>
+          </select>
+        </div>
+
+        <button class="btn-primary" id="parse-btn" disabled style="margin-top:auto">
+          ▶ Carregar CSV
+        </button>
+        <div id="large-file-warning" class="large-file-warning hidden">
+          <span>⚠ Arquivo grande — selecione uma Regional e clique em Processar</span>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ── PROGRESS ────────────────────────────────────────── -->
+    <div class="progress-container hidden" id="progress-container">
+      <div class="progress-bar-track">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <div class="progress-label" id="progress-label">Carregando…</div>
+    </div>
+
+    <!-- ── FILTRO REGIONAL ──────────────────────────────────── -->
+    <section class="glass-panel hidden" id="filters-panel">
+      <div id="regional-filter-row" class="regional-filter-row">
+        <span class="regional-label">◉ Regional</span>
+        <select id="regional-select">
+          <option value="">Todas as Regionais</option>
+        </select>
+        <span id="regional-info" class="regional-info" style="display:none"></span>
+        <button class="btn-text remove-filter" id="clear-regional-btn" title="Limpar filtro de Regional" style="display:none">×</button>
+        <button class="btn-primary btn-process" id="process-btn" disabled title="Selecione uma Regional antes de processar">⚡ Processar</button>
+      </div>
+    </section>
+
+    <!-- ── CAMPOS PARA EXPORTAÇÃO ─────────────────────────── -->
+    <section class="glass-panel cols-panel hidden" id="cols-panel">
+      <div class="cols-header">
+        <p class="panel-title" style="margin-bottom:0">
+          Campos para Exportação
+          <span class="badge" id="cols-count" style="display:none">0</span>
+        </p>
+        <div class="cols-actions">
+          <select id="cols-col-selector">
+            <option value="">Selecionar campo…</option>
+          </select>
+          <button class="btn-secondary" id="cols-add-btn" disabled>+ Campo</button>
+          <button class="btn-text" id="cols-clear-btn">Limpar</button>
+        </div>
+      </div>
+      <div id="cols-tags">
+        <span class="cols-empty-hint">Nenhum campo selecionado — todos serão exportados</span>
+      </div>
+    </section>
+
+    <!-- ── TABLE ───────────────────────────────────────────── -->
+    <section class="glass-panel table-section hidden" id="table-container">
+      <div class="table-toolbar">
+        <span id="row-counter"></span>
+        <div class="export-wrap">
+          <button class="btn-primary btn-export" id="export-btn">
+            ⬇ Exportar para Excel
+          </button>
+          <div class="export-progress hidden" id="export-progress">
+            <div class="export-progress-bar" id="export-progress-bar"></div>
+            <span class="export-progress-label" id="export-progress-label">0%</span>
+          </div>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table id="data-table"></table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </section>
+
+  </main>
+
+  <!-- ── TOASTS ───────────────────────────────────────────────── -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────── -->
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <div class="footer-dev">
+        <img src="logopsdev.png" alt="PSdev" title="PSdev — Desenvolvimento de Sistemas">
+        <div class="footer-dev-info">
+          <span class="footer-dev-label">Desenvolvido por</span>
+          <span class="footer-dev-name">PSdev — Tecnologia &amp; Sistemas</span>
+          <span class="footer-dev-contact">contato: <a href="mailto:pasimplicio@gmail.com">pasimplicio@gmail.com</a></span>
+        </div>
+      </div>
+      <div class="footer-copy">
+        <strong>PSDevExtractor</strong> · Tratamento de arquivos .csv<br>
+        Uso interno · CAEMA &copy; <span id="footer-year"></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="lib/papaparse.min.js"></script>
+  <script src="js/localidade.js"></script>
+  <script src="js/csv-parser.js"></script>
+  <script src="js/filter-engine.js"></script>
+  <script src="js/table-view.js"></script>
+  <script src="js/exporter.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- Toast utility (global, disponível para todos os módulos) -->
+  <script>
+    window.showToast = function (msg, type, duration) {
+      type     = type     || 'info';
+      duration = duration || 5000;
+      var icons = { info: 'ℹ', success: '✔', warning: '⚠', error: '✖' };
+      var c = document.getElementById('toast-container');
+      var t = document.createElement('div');
+      t.className = 'toast ' + type;
+      t.innerHTML = '<span class="toast-icon">' + (icons[type] || 'ℹ') + '</span>'
+                  + '<span class="toast-msg">' + String(msg).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</span>';
+      c.appendChild(t);
+      setTimeout(function () {
+        t.style.transition = 'opacity 0.3s';
+        t.style.opacity    = '0';
+        setTimeout(function () { t.remove(); }, 320);
+      }, duration);
+    };
+  </script>
+
+  <!-- Footer year + status separators after first load -->
+  <script>
+    document.getElementById('footer-year').textContent = new Date().getFullYear();
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var rows = document.getElementById('status-rows');
+      var observer = new MutationObserver(function () {
+        var hasData = rows.textContent.includes('linhas') && !rows.textContent.includes('Nenhum');
+        ['status-sep1','status-sep2','status-filtered','status-time'].forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el) el.style.display = hasData ? '' : 'none';
+        });
+      });
+      observer.observe(rows, { characterData: true, childList: true, subtree: true });
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,90 @@
+'use strict';
+
+/**
+ * LocalidadeDB — dados do dLocalidade.csv embutidos diretamente no JS.
+ * Funciona com file:// sem precisar de fetch() ou servidor.
+ *
+ * Chave de join: campo "Localidade" (ID numérico) presente no CSV importado.
+ */
+const LocalidadeDB = (() => {
+
+  // Mapa id → Regional (gerado a partir de dLocalidade.csv)
+  const _idToRegional = {
+    '1':'PEDREIRAS','2':'PEDREIRAS','3':'PEDREIRAS','4':'PEDREIRAS',
+    '5':'PEDREIRAS','6':'PEDREIRAS','7':'PEDREIRAS','8':'PEDREIRAS',
+    '9':'PEDREIRAS','10':'PEDREIRAS','11':'PEDREIRAS','12':'PEDREIRAS',
+    '13':'PEDREIRAS','14':'PEDREIRAS','15':'PEDREIRAS','16':'PEDREIRAS',
+    '17':'PEDREIRAS','18':'PEDREIRAS','19':'PEDREIRAS','20':'PEDREIRAS',
+    '21':'PEDREIRAS','22':'PEDREIRAS','23':'PEDREIRAS',
+    '111':'SAO LUIS','122':'SAO LUIS','133':'SAO LUIS','134':'SAO LUIS',
+    '141':'SAO LUIS','142':'SAO LUIS','143':'SAO LUIS','144':'SAO LUIS',
+    '145':'SAO LUIS','151':'SAO LUIS','172':'SAO LUIS','183':'SAO LUIS',
+    '184':'SAO LUIS','191':'SAO LUIS','192':'SAO LUIS','194':'SAO LUIS',
+    '195':'SAO LUIS',
+    '201':'CHAPADINHA','202':'CHAPADINHA','203':'CHAPADINHA','204':'CHAPADINHA',
+    '205':'CHAPADINHA','206':'CHAPADINHA','207':'CHAPADINHA','208':'CHAPADINHA',
+    '209':'CHAPADINHA','210':'CHAPADINHA','211':'CHAPADINHA','213':'CHAPADINHA',
+    '212':'BARREIRINHAS','214':'BARREIRINHAS','235':'BARREIRINHAS',
+    '236':'BARREIRINHAS','237':'BARREIRINHAS','238':'BARREIRINHAS',
+    '240':'ITAPECURU','241':'ITAPECURU',
+    '301':'PINHEIRO','302':'PINHEIRO','303':'PINHEIRO','304':'PINHEIRO',
+    '305':'PINHEIRO','306':'PINHEIRO','307':'PINHEIRO','308':'PINHEIRO',
+    '309':'PINHEIRO','310':'PINHEIRO','314':'PINHEIRO','315':'PINHEIRO',
+    '319':'PINHEIRO','324':'PINHEIRO','331':'PINHEIRO','339':'PINHEIRO',
+    '362':'PINHEIRO','363':'PINHEIRO','368':'PINHEIRO','370':'PINHEIRO',
+    '371':'PINHEIRO','372':'PINHEIRO','373':'PINHEIRO','374':'PINHEIRO',
+    '375':'PINHEIRO','646':'PINHEIRO',
+    '401':'PEDREIRAS','402':'PEDREIRAS','403':'PEDREIRAS','404':'PEDREIRAS',
+    '405':'PEDREIRAS','408':'PEDREIRAS','410':'PEDREIRAS','412':'PEDREIRAS',
+    '413':'PEDREIRAS','415':'PEDREIRAS','416':'PEDREIRAS','417':'PEDREIRAS',
+    '419':'PEDREIRAS','428':'PEDREIRAS','429':'PEDREIRAS','430':'PEDREIRAS',
+    '433':'PEDREIRAS','441':'PEDREIRAS','442':'PEDREIRAS','443':'PEDREIRAS',
+    '644':'PEDREIRAS','813':'PEDREIRAS',
+    '501':'SAO JOAO DOS PATOS','503':'SAO JOAO DOS PATOS','504':'SAO JOAO DOS PATOS',
+    '505':'SAO JOAO DOS PATOS','507':'SAO JOAO DOS PATOS','509':'SAO JOAO DOS PATOS',
+    '511':'SAO JOAO DOS PATOS','512':'SAO JOAO DOS PATOS','513':'SAO JOAO DOS PATOS',
+    '515':'SAO JOAO DOS PATOS','517':'SAO JOAO DOS PATOS','518':'SAO JOAO DOS PATOS',
+    '519':'SAO JOAO DOS PATOS','520':'SAO JOAO DOS PATOS','521':'SAO JOAO DOS PATOS',
+    '525':'SAO JOAO DOS PATOS','526':'SAO JOAO DOS PATOS','527':'SAO JOAO DOS PATOS',
+    '528':'SAO JOAO DOS PATOS','719':'SAO JOAO DOS PATOS','720':'SAO JOAO DOS PATOS',
+    '721':'SAO JOAO DOS PATOS',
+    '601':'SANTA INES','602':'SANTA INES','603':'SANTA INES','605':'SANTA INES',
+    '606':'SANTA INES','607':'SANTA INES','608':'SANTA INES','609':'SANTA INES',
+    '610':'SANTA INES','614':'SANTA INES','615':'SANTA INES','616':'SANTA INES',
+    '617':'SANTA INES','618':'SANTA INES','621':'SANTA INES','623':'SANTA INES',
+    '640':'SANTA INES','641':'SANTA INES','642':'SANTA INES','643':'SANTA INES',
+    '645':'SANTA INES','650':'SANTA INES','626':'SANTA INES',
+    '701':'IMPERATRIZ','702':'IMPERATRIZ','703':'IMPERATRIZ','704':'IMPERATRIZ',
+    '705':'IMPERATRIZ','706':'IMPERATRIZ','707':'IMPERATRIZ','708':'IMPERATRIZ',
+    '709':'IMPERATRIZ','710':'IMPERATRIZ','716':'IMPERATRIZ','722':'IMPERATRIZ',
+    '725':'IMPERATRIZ','726':'IMPERATRIZ','727':'IMPERATRIZ','728':'IMPERATRIZ',
+    '801':'ITAPECURU','802':'ITAPECURU','803':'ITAPECURU','805':'ITAPECURU',
+    '806':'ITAPECURU','809':'ITAPECURU','810':'ITAPECURU','811':'BARREIRINHAS',
+    '814':'ITAPECURU','815':'BARREIRINHAS','816':'ITAPECURU','817':'ITAPECURU',
+    '818':'ITAPECURU','825':'ITAPECURU','830':'BARREIRINHAS','831':'BARREIRINHAS',
+    '832':'BARREIRINHAS','833':'BARREIRINHAS','834':'ITAPECURU','835':'ITAPECURU',
+    '836':'ITAPECURU','804':'BARREIRINHAS','807':'BARREIRINHAS',
+    '901':'PRES DUTRA','902':'PRES DUTRA','903':'PRES DUTRA','904':'PRES DUTRA',
+    '905':'PRES DUTRA','906':'PRES DUTRA','907':'PRES DUTRA','908':'PRES DUTRA',
+    '909':'PRES DUTRA','910':'PRES DUTRA','911':'PRES DUTRA','912':'PRES DUTRA',
+    '913':'PRES DUTRA','914':'PRES DUTRA','915':'PRES DUTRA','916':'PRES DUTRA',
+    '917':'PRES DUTRA','918':'PRES DUTRA','925':'PRES DUTRA','926':'PRES DUTRA',
+    '927':'SAO LUIS'
+  };
+
+  // Constrói índice invertido: regional → Set<id>
+  const _byRegional = {};
+  for (const [id, reg] of Object.entries(_idToRegional)) {
+    if (!_byRegional[reg]) _byRegional[reg] = new Set();
+    _byRegional[reg].add(id);
+  }
+
+  const _regionais = Object.keys(_byRegional).sort();
+
+  function isLoaded()                   { return true; }
+  function getRegionais()               { return _regionais; }
+  function getIdsByRegional(regional)   { return _byRegional[regional] || new Set(); }
+  function getRegionalById(id)          { return _idToRegional[String(id).trim()] || null; }
+
+  return { isLoaded, getRegionais, getIdsByRegional, getRegionalById };
+})();
