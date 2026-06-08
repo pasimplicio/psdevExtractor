@@ -216,6 +216,7 @@ const Exporter = (() => {
       onChunk: async chunk => compChunks.push(chunk)
     });
     addEntry('xl/worksheets/sheet1.xml', compChunks, 8, sh.crc, sh.uncz);
+    compChunks.length = 0; // chunks já estão em zipParts — libera referências
 
     notify(0.92);
 
@@ -227,10 +228,18 @@ const Exporter = (() => {
     const blob = new Blob(zipParts, {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
+    // Blob já copiou os dados — libera as arrays intermediárias imediatamente
+    zipParts.length = 0;
+    cdParts.length  = 0;
+
     const url = URL.createObjectURL(blob);
     const a   = document.createElement('a');
-    a.href = url; a.download = `${baseName}_filtrado.xlsx`; a.click();
-    URL.revokeObjectURL(url);
+    a.href = url; a.download = `${baseName}_filtrado.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    // Aguarda o download iniciar antes de revogar a URL do Blob
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
 
     notify(1);
   }

@@ -88,7 +88,12 @@ body {
   height: 38px; width: auto;
   object-fit: contain;
 }
-.dark-mode .logo-caema img { filter: brightness(0) invert(1); }
+.dark-mode .logo-caema {
+  background: rgba(255,255,255,0.90);
+  border-radius: 5px;
+  padding: 3px 8px;
+}
+.dark-mode .logo-caema img { filter: none; }
 
 /* Vertical divider */
 .header-divider {
